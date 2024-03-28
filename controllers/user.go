@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	c "todo/models"
+	models "todo/models"
 
 	"database/sql"
 
@@ -14,18 +14,18 @@ import (
 )
 
 var (
-	dbinfo    string = c.DbInfo
+	dbinfo    string = models.DbInfo
 	secretKey        = []byte("your_password")
 )
 
 func CreateUser(context *gin.Context) {
-	var user c.User
+	var user models.User
 	if err := context.Bind(&user); err != nil {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"error 100": "invalid parameters"})
 		return
 	}
 	db, err := sql.Open("mysql", dbinfo)
-	defer db.Close()
+
 	if err != nil {
 		context.IndentedJSON(http.StatusInternalServerError, gin.H{"error 500": "internal server error"})
 		return
@@ -43,7 +43,7 @@ func CreateUser(context *gin.Context) {
 		return
 	}
 	context.IndentedJSON(http.StatusOK, gin.H{"message": "user created succesfully"})
-
+	db.Close()
 }
 func encrpytPassword(password string) (*string, error) {
 	hashedPasswordByte, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -54,13 +54,13 @@ func encrpytPassword(password string) (*string, error) {
 	return &hashedPassword, nil
 }
 func GetUser(context *gin.Context) {
-	var user c.User
+	var user models.User
 	if err := context.Bind(&user); err != nil {
 		context.IndentedJSON(http.StatusBadRequest, gin.H{"error 100": "invalid parameters"})
 		return
 	}
 	db, err := sql.Open("mysql", dbinfo)
-	defer db.Close()
+
 	if err != nil {
 		fmt.Println(err)
 		context.IndentedJSON(http.StatusInternalServerError, gin.H{"error 500": "internal server error"})
@@ -92,6 +92,7 @@ func GetUser(context *gin.Context) {
 		return
 	}
 	context.IndentedJSON(http.StatusOK, gin.H{"succes": token})
+	db.Close()
 }
 func generateToken(userId int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -103,27 +104,4 @@ func generateToken(userId int) (string, error) {
 		return "", err
 	}
 	return tokeString, nil
-}
-
-func parseToken(tokenString string) (int, error) {
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-
-		return secretKey, nil
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
-		userID := int(claims["user_id"].(float64))
-		return userID, nil
-	}
-
-	return 0, fmt.Errorf("invalid token")
 }
