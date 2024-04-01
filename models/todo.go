@@ -5,7 +5,7 @@ type Todo struct {
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
 	DueDate     string `json:"due_date,omitempty"`
-	IsFinished  bool   `json:"is_finished,omitempty"`
+	IsFinished  bool   `json:"is_finished"`
 }
 
 // +-------------+-------------+------+-----+---------+----------------+

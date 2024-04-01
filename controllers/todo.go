@@ -100,3 +100,66 @@ func ListTodos(context *gin.Context) {
 	}
 	context.IndentedJSON(http.StatusOK, todos)
 }
+
+func ChangeCondition(context *gin.Context) {
+	type TempTodo struct {
+		Id        int    `json:"id"`
+		Token     string `json:"token"`
+		Condition bool   `json:"condition"`
+	}
+	var tempTodo TempTodo
+	if err := context.Bind(&tempTodo); err != nil {
+		context.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid parameters"})
+		return
+	}
+	db, err := sql.Open("mysql", dbinfo)
+	if err != nil {
+		context.IndentedJSON(404, gin.H{"error": "error opening database"})
+		return
+	}
+	userId, err := parseToken(tempTodo.Token)
+	if err != nil {
+		context.IndentedJSON(http.StatusBadRequest, gin.H{"error": "token error"})
+		return
+	}
+
+	query := "update todos set is_finished=? where id=? and user_id=?"
+	result, err := db.Exec(query, tempTodo.Condition, tempTodo.Id, userId)
+	if err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "error on database while changing condition"})
+		return
+	}
+	fmt.Println(result.RowsAffected())
+	context.IndentedJSON(http.StatusOK, gin.H{"succes": "changement is made succesfully"})
+	db.Close()
+}
+func RemoveTodo(context *gin.Context) {
+	type TempTodo struct {
+		Id    int    `json:"id"`
+		Token string `json:"token"`
+	}
+	var tempTodo TempTodo
+	if err := context.Bind(&tempTodo); err != nil {
+		context.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error on parameters"})
+		return
+	}
+	db, err := sql.Open("mysql", dbinfo)
+	if err != nil {
+		context.IndentedJSON(404, gin.H{"error": "error opening database"})
+		return
+	}
+	userId, err := parseToken(tempTodo.Token)
+	if err != nil {
+		context.IndentedJSON(http.StatusBadRequest, gin.H{"error": "token error"})
+		return
+	}
+	query := "delete from todos where id=? and user_id=?"
+	result, err := db.Exec(query, tempTodo.Id, userId)
+	if err != nil {
+		context.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error on database"})
+		return
+	}
+	fmt.Println(result.RowsAffected())
+	context.IndentedJSON(http.StatusOK, gin.H{"message": "todo deleted succesfully"})
+	db.Close()
+}

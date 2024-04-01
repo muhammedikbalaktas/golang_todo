@@ -8,11 +8,12 @@ type User struct {
 	Created_at string `json:"created_at,omitempty"`
 }
 
-// create table user(
-//     id int auto_increment not null,
-//     username varchar(20) unique not null,
-//     email varchar(30) unique not null,
-//     password varchar(60) not null,
-//     created_at date not null,
-//     primary key(id)
-//     );
+// +------------+-------------+------+-----+---------+----------------+
+// | Field      | Type        | Null | Key | Default | Extra          |
+// +------------+-------------+------+-----+---------+----------------+
+// | id         | int         | NO   | PRI | NULL    | auto_increment |
+// | username   | varchar(20) | NO   | UNI | NULL    |                |
+// | email      | varchar(30) | NO   | UNI | NULL    |                |
+// | password   | varchar(60) | NO   |     | NULL    |                |
+// | created_at | date        | NO   |     | NULL    |                |
+// +------------+-------------+------+-----+---------+----------------+
